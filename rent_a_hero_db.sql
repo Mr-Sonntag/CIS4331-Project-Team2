@@ -166,7 +166,7 @@ GROUP BY u.userID;
 CREATE TABLE employees_proj (
     employeeID NUMBER PRIMARY KEY,
     firstName VARCHAR2(50) NOT NULL,
-    middleName VARCHAR2(50),
+    middleName VARCHAR2(50) NULL,
     lastName VARCHAR2(50) NOT NULL,
     hireDate DATE NOT NULL,
     emailAddress VARCHAR2(100) UNIQUE,
@@ -175,12 +175,19 @@ CREATE TABLE employees_proj (
     salary NUMBER(10,2),
     bonus NUMBER(10,2),
     siteID NUMBER,
-    departmentID NUMBER,
-    CONSTRAINT fk_site
-        FOREIGN KEY (siteID) REFERENCES company_sites(siteID),
-    CONSTRAINT fk_department
-        FOREIGN KEY (departmentID) REFERENCES departments(departmentID)
+    departmentID NUMBER
 );
+
+-- FK Constraints employees_proj
+ALTER TABLE employees_proj
+ADD CONSTRAINT fk_site
+FOREIGN KEY (siteID) 
+REFERENCES company_sites(siteID),
+
+ALTER TABLE employees_proj
+CONSTRAINT fk_department
+FOREIGN KEY (departmentID) 
+REFERENCES departments(departmentID)
 
 
 CREATE TABLE it_service_tickets (
@@ -188,26 +195,33 @@ CREATE TABLE it_service_tickets (
     serviceIssues VARCHAR2(255),
     status VARCHAR2(50),
     userID NUMBER NOT NULL,
-    employeeID NUMBER,
-    CONSTRAINT fk_ticket_user
-        FOREIGN KEY (userID) REFERENCES users(userID),
-    CONSTRAINT fk_ticket_employee
-        FOREIGN KEY (employeeID) REFERENCES employees_proj(employeeID)
-);
+    employeeID NUMBER NULL
+    );
+    
+-- FK Constraints it_service_tickets
+ALTER TABLE it_service_tickets
+CONSTRAINT fk_ticket_employee
+FOREIGN KEY (employeeID) 
+REFERENCES employees_proj(employeeID)
+
+ALTER TABLE it_service_tickets
+CONSTRAINT fk_ticket_user
+FOREIGN KEY (userID)
+REFERENCES users(userID),
+
 
 CREATE TABLE communication_log (
     logID NUMBER PRIMARY KEY,
     messageHistory VARCHAR2(500),
-    ticketID NUMBER NOT NULL,
-    employeeID NUMBER,
-    userID NUMBER,
-    CONSTRAINT fk_log_ticket
-        FOREIGN KEY (ticketID) REFERENCES it_service_tickets(ticketID),
-    CONSTRAINT fk_log_employee
-        FOREIGN KEY (employeeID) REFERENCES employees_proj(employeeID),
-    CONSTRAINT fk_log_user
-        FOREIGN KEY (userID) REFERENCES users(userID)
+    ticketID NUMBER NOT NULL
 );
+
+-- FK Constraints communication_log
+ALTER TABLE communication_log
+CONSTRAINT fk_log_ticket
+FOREIGN KEY (ticketID)
+REFERENCES it_service_tickets(ticketID)
+
 
 --Insert Statements for Employees, IT Service Ticekts and Communication Log
 INSERT INTO employees_proj 
@@ -224,17 +238,17 @@ VALUES (
 INSERT INTO it_service_tickets 
     (ticketID, serviceIssues, status, userID, employeeID)
 VALUES (
-    1, 'My house is on fire.', 'In Progress', 3, 2
+    1, 'Can''t login into my account.', 'In Progress', 3, 2
 );
 
 INSERT INTO it_service_tickets 
     (ticketID, serviceIssues, status, userID, employeeID)
 VALUES (
-    2, 'I''m stuck on a roof of a skyscraper', 'Closed', 2, 1
+    2, 'My password is incorrect.', 'Resolved', 2, 1
 );
 
-INSERT INTO communication_log (logID, messageHistory, ticketID, employeeID, userID)
-    VALUES ( 101, 'Aquaman is on the way to client.', 1, 2, 3);
+INSERT INTO communication_log (logID, messageHistory, ticketID)
+    VALUES ( 101, 'User cannot login.', 1);
 
 INSERT INTO communication_log (logID, messageHistory, ticketID, employeeID, userID)
-    VALUES (102, 'Superman completed mission.', 2, 1, 2);
+    VALUES (102, 'Password was reset.', 2, 1, 2);
