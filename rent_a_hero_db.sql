@@ -5,7 +5,7 @@ Zachary Sonntag, Joey Huang, Adam Marx, Sofia Borukhovich
 */
 
 --USERS Table
-CREATE TABLE users
+CREATE TABLE app_users
 (   userID NUMBER NOT NULL,
 firstname CHAR(20) NOT NULL,
 lastname CHAR(20) NOT NULL,
@@ -30,7 +30,7 @@ CONSTRAINT users_email_uq
 CREATE TABLE contractors
 (   contractorID NUMBER NOT NULL,
 servicelocation VARCHAR2(50) NOT NULL,
-accountbio VARCHAR2(50) NOT NULL,
+accountbio VARCHAR2(200) NOT NULL,
 rate NUMBER NOT NULL,
 userID NUMBER NOT NULL UNIQUE,
 CONSTRAINT contractors_pk
@@ -52,46 +52,7 @@ CONSTRAINT contractors_skills_fk_contractors
     FOREIGN KEY (contractorID) 
         REFERENCES contractors
 );
-
-
---Drop table statements for testing
---DROP TABLE users;
---DROP TABLE contractors;
---DROP TABLE contractors_skills;
-
---Indexing for users and contractors
-CREATE INDEX userlastname_index ON users(lastname);
-CREATE INDEX contractorlocation_index ON contractors(servicelocation);
-CREATE INDEX useremail_index ON users(emailaddress);
-CREATE INDEX contractoruseris_index ON contractors(userID);
-
---Drop index statements for testing
---DROP INDEX userlastname_index ON users(lastname);
---DROP INDEX contractorlocation_index ON contractors(servicelocation);
-
---Sequences for tables
-CREATE SEQUENCE USERS_ID_SEQ
-    START WITH 70001234;
-CREATE SEQUENCE CONTRACTORS_ID_SEQ
-    START WITH 1001;
     
---Drop sequence statements for testing
---DROP SEQUENCE IF EXISTS USERS_ID_SEQ;
---DROP SEQUENCE IF EXISTS CONTRACTORS_ID_SEQ;
-
---Insert statements
-INSERT INTO USERS
-VALUES();
-INSERT INTO USERS
-VALUES();
-INSERT INTO CONTRACTORS
-VALUES();
-INSERT INTO CONTRACTORS
-VALUES();
-INSERT INTO CONTRACTORS_SKILLS
-VALUES();
-INSERT INTO CONTRACTORS_SKILLS
-VALUES();
 
 --JOBS TABLE
 CREATE TABLE jobs
@@ -116,50 +77,8 @@ CREATE TABLE ratings
   jobID NUMBER REFERENCES jobs(jobID)
 );
 
---Drop table statements for testing
---DROP TABLE jobs;
---DROP TABLE ratings;
-
 --Indexing for jobs and ratings
 CREATE INDEX rating_score_index ON ratings(rating_score);
-
---Drop index statements for testing
---DROP INDEX rating_score_index;
-
---Insert statements
-INSERT INTO jobs
-(jobID, status, description, timestamp, created_by_userID, accepted_by_contractorID)
-VALUES(1, 'OPEN', 'Defeat Villian 1', CURRENT_TIMESTAMP, 70001234, 1001);
-
-INSERT INTO jobs
-(jobID, status, description, timestamp, created_by_userID, accepted_by_contractorID)
-VALUES(2, 'ASSIGNED', 'Defeat Villian 2', CURRENT_TIMESTAMP, 70001235, 1002);
-
-INSERT INTO ratings
-(ratingID, rating_score, date_written, comments, contractorID, userID, jobID)
-VALUES(1, 5, SYSDATE, 'Excellent work', 1001, 70001234, 1);
-
-INSERT INTO ratings
-(ratingID, rating_score, date_written, comments, contractorID, userID, jobID)
-VALUES(1, 4, SYSDATE, 'Good work', 1002, 70001235, 2);
-
--- Summary queries
-SELECT 
-  c.contractorID,
-  AVG(r.rating_score) AS avg_rating,
-  COUNT(r.ratingID) AS total_reviews
-FROM contractors c
-JOIN ratings r ON c.contractorID = r.contractorID
-GROUP BY c.contractorID;
-
-SELECT 
-  u.userID,
-  COUNT(j.jobID) AS total_jobs_posted,
-  AVG(r.rating_score) AS avg_job_rating
-FROM users u
-JOIN jobs j ON u.userID = j.created_by_userID
-LEFT JOIN ratings r ON j.jobID = r.jobID
-GROUP BY u.userID;
 
 
 --Create COMMUNICATION_LOG, EMPLOYEES, and IT_SERVICE_TICKETS tables.
@@ -222,6 +141,79 @@ CONSTRAINT fk_log_ticket
 FOREIGN KEY (ticketID)
 REFERENCES it_service_tickets(ticketID)
 
+--Indexing for users and contractors
+CREATE INDEX userlastname_index ON app_users(lastname);
+CREATE INDEX contractorlocation_index ON contractors(servicelocation);
+CREATE INDEX useremail_index ON app_users(emailaddress);
+CREATE INDEX contractoruseris_index ON contractors(userID);
+
+--Sequences for tables
+CREATE SEQUENCE USERS_ID_SEQ
+    START WITH 70001234;
+CREATE SEQUENCE CONTRACTORS_ID_SEQ
+    START WITH 1001;
+
+--Insert statements
+INSERT INTO APP_USERS
+    (userID, firstname, lastname, userpassword, 
+    emailaddress, phonenumber, dateofbirth, paymentinformation,
+    middlename, refferedbyemployeeID) 
+VALUES(USER_ID_SEQ.NEXTVAL, 'Bruce', 'Wayne', 'L0v3Alffy', 
+    'thedarkknight@hotmail.com', '215-440-1605', '02/19/1990', 'Wayne Enterprises', 'Thomas', 3);
+    
+INSERT INTO APP_USERS
+    (userID, firstname, lastname, userpassword, 
+    emailaddress, phonenumber, dateofbirth, paymentinformation,
+    middlename, refferedbyemployeeID) 
+VALUES(USER_ID_SEQ.NEXTVAL, 'Geoke', 'Ur', 'G0th@mi$min3!', 
+    'bAtMaNsAvEuS@aol.com', '333-222-1111', '07/11/1991', 'Gotham Bank', null, null);
+
+INSERT INTO APP_USERS
+    (userID, firstname, lastname, userpassword, 
+    emailaddress, phonenumber, dateofbirth, paymentinformation,
+    middlename, refferedbyemployeeID) 
+VALUES(USER_ID_SEQ.NEXTVAL, 'Clark', 'Kent', 'Lois0817<3', 
+    'manofsteel@yahoo.com', '531-235-6795', '02/29/1985', 'Wayne Enterprises', 'Thomas', 3);
+
+INSERT INTO CONTRACTORS 
+    (contractorID, servicelocation, accountbio, rate, userID)
+VALUES(CONTRACTORS_ID_SEQ.NEXTVAL, 'Gotham City', 
+    'I seek the means to fight injustice, to turn fear against those who prey on the fearful.',
+    20, (SELECT USERID
+    FROM APP_USERS
+    WHERE EMAILADDRESS = 'thedarkknight@hotmail.com'));
+
+INSERT INTO CONTRACTORS
+    (contractorID, servicelocation, accountbio, rate, userID)
+VALUES(CONTRACTORS_ID_SEQ.NEXTVAL, 'Earth', 
+    'Dreams save us... Ill never stop fighting.',
+    0, (SELECT USERID
+    FROM APP_USERS
+    WHERE EMAILADDRESS = 'manofsteel@yahoo.com'));
+    
+INSERT INTO CONTRACTORS_SKILLS 
+    (contractorID, skill)
+VALUES(1001, 'Martial Arts');
+
+INSERT INTO CONTRACTORS_SKILLS
+    (contractorID, skill)
+VALUES(1002, 'Ability to fly');
+
+INSERT INTO jobs
+(jobID, status, description, timestamp, created_by_userID, accepted_by_contractorID)
+VALUES(1, 'OPEN', 'Defeat Villian 1', CURRENT_TIMESTAMP, 70001234, 1001);
+
+INSERT INTO jobs
+(jobID, status, description, timestamp, created_by_userID, accepted_by_contractorID)
+VALUES(2, 'ASSIGNED', 'Defeat Villian 2', CURRENT_TIMESTAMP, 70001235, 1002);
+
+INSERT INTO ratings
+(ratingID, rating_score, date_written, comments, contractorID, userID, jobID)
+VALUES(1, 5, SYSDATE, 'Excellent work', 1001, 70001234, 1);
+
+INSERT INTO ratings
+(ratingID, rating_score, date_written, comments, contractorID, userID, jobID)
+VALUES(1, 4, SYSDATE, 'Good work', 1002, 70001235, 2);
 
 --Insert Statements for Employees, IT Service Ticekts and Communication Log
 INSERT INTO employees_proj 
@@ -252,3 +244,42 @@ INSERT INTO communication_log (logID, messageHistory, ticketID)
 
 INSERT INTO communication_log (logID, messageHistory, ticketID, employeeID, userID)
     VALUES (102, 'Password was reset.', 2, 1, 2);
+    
+--Drop table statements for testing
+
+--DROP TABLE app_users;
+--DROP TABLE contractors;
+--DROP TABLE contractors_skills;
+--DROP TABLE jobs;
+--DROP TABLE ratings;
+
+
+--Drop index statements for testing
+
+--DROP INDEX userlastname_index ON users(lastname);
+--DROP INDEX contractorlocation_index ON contractors(servicelocation);
+--DROP INDEX rating_score_index;
+
+
+--Drop sequence statements for testing
+
+--DROP SEQUENCE IF EXISTS USERS_ID_SEQ;
+--DROP SEQUENCE IF EXISTS CONTRACTORS_ID_SEQ;
+
+-- Summary queries
+SELECT 
+  c.contractorID,
+  AVG(r.rating_score) AS avg_rating,
+  COUNT(r.ratingID) AS total_reviews
+FROM contractors c
+JOIN ratings r ON c.contractorID = r.contractorID
+GROUP BY c.contractorID;
+
+SELECT 
+  u.userID,
+  COUNT(j.jobID) AS total_jobs_posted,
+  AVG(r.rating_score) AS avg_job_rating
+FROM users u
+JOIN jobs j ON u.userID = j.created_by_userID
+LEFT JOIN ratings r ON j.jobID = r.jobID
+GROUP BY u.userID;
