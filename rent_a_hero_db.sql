@@ -160,3 +160,81 @@ FROM users u
 JOIN jobs j ON u.userID = j.created_by_userID
 LEFT JOIN ratings r ON j.jobID = r.jobID
 GROUP BY u.userID;
+
+
+--Create COMMUNICATION_LOG, EMPLOYEES, and IT_SERVICE_TICKETS tables.
+CREATE TABLE employees_proj (
+    employeeID NUMBER PRIMARY KEY,
+    firstName VARCHAR2(50) NOT NULL,
+    middleName VARCHAR2(50),
+    lastName VARCHAR2(50) NOT NULL,
+    hireDate DATE NOT NULL,
+    emailAddress VARCHAR2(100) UNIQUE,
+    phoneNumber VARCHAR2(20),
+    jobTitle VARCHAR2(50),
+    salary NUMBER(10,2),
+    bonus NUMBER(10,2),
+    siteID NUMBER,
+    departmentID NUMBER,
+    CONSTRAINT fk_site
+        FOREIGN KEY (siteID) REFERENCES company_sites(siteID),
+    CONSTRAINT fk_department
+        FOREIGN KEY (departmentID) REFERENCES departments(departmentID)
+);
+
+
+CREATE TABLE it_service_tickets (
+    ticketID NUMBER PRIMARY KEY,
+    serviceIssues VARCHAR2(255),
+    status VARCHAR2(50),
+    userID NUMBER NOT NULL,
+    employeeID NUMBER,
+    CONSTRAINT fk_ticket_user
+        FOREIGN KEY (userID) REFERENCES users(userID),
+    CONSTRAINT fk_ticket_employee
+        FOREIGN KEY (employeeID) REFERENCES employees_proj(employeeID)
+);
+
+CREATE TABLE communication_log (
+    logID NUMBER PRIMARY KEY,
+    messageHistory VARCHAR2(500),
+    ticketID NUMBER NOT NULL,
+    employeeID NUMBER,
+    userID NUMBER,
+    CONSTRAINT fk_log_ticket
+        FOREIGN KEY (ticketID) REFERENCES it_service_tickets(ticketID),
+    CONSTRAINT fk_log_employee
+        FOREIGN KEY (employeeID) REFERENCES employees_proj(employeeID),
+    CONSTRAINT fk_log_user
+        FOREIGN KEY (userID) REFERENCES users(userID)
+);
+
+--Insert Statements for Employees, IT Service Ticekts and Communication Log
+INSERT INTO employees_proj 
+    (employeeID, firstName, middleName, lastName, hireDate, emailAddress, phoneNumber, jobTitle, salary, bonus, siteID, departmentID)
+VALUES (
+    1, 'Chris', 'A', 'Pine', TO_DATE('2022-05-10','YYYY-MM-DD'), 'chris.pine@email.com', '123-456-7890', 'IT Support', 60000, 5000, 1, 10);
+
+INSERT INTO employees_proj (
+    employeeID, firstName, middleName, lastName, hireDate, emailAddress, phoneNumber, jobTitle, salary, bonus, siteID, departmentID)
+VALUES ( 
+    2, 'Julia', NULL, 'Smith', TO_DATE('2021-03-15','YYYY-MM-DD'), 'julia.smith@email.com', '987-654-3210','Engineer', 80000, 7000, 2, 20
+);
+
+INSERT INTO it_service_tickets 
+    (ticketID, serviceIssues, status, userID, employeeID)
+VALUES (
+    1, 'My house is on fire.', 'In Progress', 3, 2
+);
+
+INSERT INTO it_service_tickets 
+    (ticketID, serviceIssues, status, userID, employeeID)
+VALUES (
+    2, 'I''m stuck on a roof of a skyscraper', 'Closed', 2, 1
+);
+
+INSERT INTO communication_log (logID, messageHistory, ticketID, employeeID, userID)
+    VALUES ( 101, 'Aquaman is on the way to client.', 1, 2, 3);
+
+INSERT INTO communication_log (logID, messageHistory, ticketID, employeeID, userID)
+    VALUES (102, 'Superman completed mission.', 2, 1, 2);
