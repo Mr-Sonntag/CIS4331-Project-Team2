@@ -18,13 +18,9 @@ middlename CHAR(20),
 refferedbyemployeeID NUMBER,
 CONSTRAINT users_pk
     PRIMARY KEY (userID),
-CONSTRAINT users_fk_employees
-    FOREIGN KEY (refferedbyemployeeID)
-        REFERENCES employees,
 CONSTRAINT users_email_uq
     UNIQUE(emailaddress)
 );
-
 
 --CONTRACTORS Table
 CREATE TABLE contractors
@@ -34,10 +30,7 @@ accountbio VARCHAR2(200) NOT NULL,
 rate NUMBER NOT NULL,
 userID NUMBER NOT NULL UNIQUE,
 CONSTRAINT contractors_pk
-    PRIMARY KEY (contractorID),
-CONSTRAINT contractors_fk_users
-    FOREIGN KEY (userID) 
-        REFERENCES users,
+    PRIMARY KEY (contractorID)
 CONSTRAINT contractors_userid_uq
     UNIQUE(userID)
 );
@@ -47,10 +40,7 @@ CREATE TABLE contractors_skills
 (   contractorID NUMBER NOT NULL,
 skill VARCHAR2(50) NOT NULL,
 CONSTRAINT contractors_skills_pk
-    PRIMARY KEY (contractorID, skill),
-CONSTRAINT contractors_skills_fk_contractors
-    FOREIGN KEY (contractorID) 
-        REFERENCES contractors
+    PRIMARY KEY (contractorID, skill)
 );
     
 
@@ -61,8 +51,8 @@ CREATE TABLE jobs
   status VARCHAR2(50) NOT NULL,
   description VARCHAR2(255) NOT NULL,
   timestamp TIMESTAMP NOT NULL,
-  created_by_userID NUMBER REFERENCES users(userID),
-  accepted_by_contractorID NUMBER REFERENCES contractors(contractorID)
+  created_by_userID NUMBER,
+  accepted_by_contractorID NUMBER
 );
 
 --RATINGS TABLE
@@ -72,9 +62,9 @@ CREATE TABLE ratings
   rating_score NUMBER NOT NULL,
   date_written DATE NOT NULL,
   comments VARCHAR2(255),
-  contractorID NUMBER REFERENCES contractors(contractorID),
-  userID NUMBER REFERENCES users(userID),
-  jobID NUMBER REFERENCES jobs(jobID)
+  contractorID NUMBER,
+  userID NUMBER,
+  jobID NUMBER
 );
 
 --Indexing for jobs and ratings
@@ -97,16 +87,16 @@ CREATE TABLE employees_proj (
     departmentID NUMBER
 );
 
--- FK Constraints employees_proj
-ALTER TABLE employees_proj
-ADD CONSTRAINT fk_site
-FOREIGN KEY (siteID) 
-REFERENCES company_sites(siteID),
+-- -- FK Constraints employees_proj
+-- ALTER TABLE employees_proj
+-- ADD CONSTRAINT fk_site
+-- FOREIGN KEY (siteID) 
+-- REFERENCES company_sites(siteID),
 
-ALTER TABLE employees_proj
-CONSTRAINT fk_department
-FOREIGN KEY (departmentID) 
-REFERENCES departments(departmentID)
+-- ALTER TABLE employees_proj
+-- CONSTRAINT fk_department
+-- FOREIGN KEY (departmentID) 
+-- REFERENCES departments(departmentID)
 
 
 CREATE TABLE it_service_tickets (
@@ -118,15 +108,15 @@ CREATE TABLE it_service_tickets (
     );
     
 -- FK Constraints it_service_tickets
-ALTER TABLE it_service_tickets
-CONSTRAINT fk_ticket_employee
-FOREIGN KEY (employeeID) 
-REFERENCES employees_proj(employeeID)
+-- ALTER TABLE it_service_tickets
+-- CONSTRAINT fk_ticket_employee
+-- FOREIGN KEY (employeeID) 
+-- REFERENCES employees_proj(employeeID)
 
-ALTER TABLE it_service_tickets
-CONSTRAINT fk_ticket_user
-FOREIGN KEY (userID)
-REFERENCES users(userID),
+-- ALTER TABLE it_service_tickets
+-- CONSTRAINT fk_ticket_user
+-- FOREIGN KEY (userID)
+-- REFERENCES users(userID),
 
 
 CREATE TABLE communication_log (
@@ -135,11 +125,11 @@ CREATE TABLE communication_log (
     ticketID NUMBER NOT NULL
 );
 
--- FK Constraints communication_log
-ALTER TABLE communication_log
-CONSTRAINT fk_log_ticket
-FOREIGN KEY (ticketID)
-REFERENCES it_service_tickets(ticketID)
+-- -- FK Constraints communication_log
+-- ALTER TABLE communication_log
+-- CONSTRAINT fk_log_ticket
+-- FOREIGN KEY (ticketID)
+-- REFERENCES it_service_tickets(ticketID)
 
 --Indexing for users and contractors
 CREATE INDEX userlastname_index ON app_users(lastname);
@@ -152,6 +142,154 @@ CREATE SEQUENCE USERS_ID_SEQ
     START WITH 70001234;
 CREATE SEQUENCE CONTRACTORS_ID_SEQ
     START WITH 1001;
+
+--CONSULTANTS Table
+CREATE TABLE consultants
+(   consultantID NUMBER NOT NULL UNIQUE,
+    firstName CHAR(20) NOT NULL,
+    lastName CHAR(20) NOT NULL,
+    startDate DATE NOT NULL,
+    emailAddress VARCHAR2(254) NOT NULL,
+    workNumber INT NOT NULL,
+    senority INT NOT NULL,
+    departmentID NUMBER NOT NULL UNIQUE,
+    siteID NUMBER UNIQUE,
+    employeeID NUMBER UNIQUE,
+    CONSTRAINT consultants_pk
+        PRIMARY KEY (consultantID),
+);
+
+--COMPANY_SITES Table
+CREATE TABLE company_sites
+(   siteID NUMBER NOT NULL UNIQUE,
+    siteName VARCHAR2(100) NOT NULL,
+    street VARCHAR2(50) NOT NULL,
+    city VARCHAR2(100) NOT NULL,
+    state VARCHAR2(100) NOT NULL,
+    country VARCHAR2(100) NOT NULL,
+    siteType VARCHAR2(50),
+    sitePhoneNumber VARCHAR2(20),
+    employeesCount NUMBER,
+    consultantsCount NUMBER,
+    CONSTRAINT company_sites_pk
+        PRIMARY KEY (siteID)
+);
+
+--DEPARTMENTS Table
+CREATE TABLE departments
+(   departmentID NUMBER NOT NULL UNIQUE,
+    departmentName VARCHAR2(100) NOT NULL,
+    managedByEmployeeID NUMBER NOT NULL UNIQUE,
+    siteID NUMBER UNIQUE,
+    CONSTRAINT departments_pk
+        PRIMARY KEY (departmentID),
+);
+
+--Indexing for consultants
+CREATE INDEX consultantlastname_index ON consultants(lastname);
+CREATE INDEX consultantemail_index ON consultants(emailAddress);
+
+-- COMPANY_SITES sequence
+CREATE SEQUENCE company_sites_id_seq
+    START WITH 0
+    INCREMENT BY 1;
+
+-- DEPARTMENTS sequence
+CREATE SEQUENCE departments_id_seq
+    START WITH 0
+    INCREMENT BY 1;
+
+-- CONSULTANTS sequence
+CREATE SEQUENCE consultants_id_seq
+    START WITH 0
+    INCREMENT BY 1;
+
+
+-- FOREIGN KEY CONSTRAINTS ------------------------------------------------
+-- app_users
+ALTER TABLE app_users
+ADD CONSTRAINT users_fk_employees
+FOREIGN KEY (refferedbyemployeeID)
+REFERENCES employees_proj(employeeID);
+
+-- contractors
+ALTER TABLE contractors
+ADD CONSTRAINT contractors_fk_users
+FOREIGN KEY (userID)
+REFERENCES app_users(userID);
+
+-- contractors_skills
+ALTER TABLE contractors_skills
+ADD CONSTRAINT contractors_skills_fk_contractors
+FOREIGN KEY (contractorID)
+REFERENCES contractors(contractorID);
+
+-- jobs (created_by_userID)
+ALTER TABLE jobs
+ADD CONSTRAINT jobs_fk_users
+FOREIGN KEY (created_by_userID)
+REFERENCES app_users(userID);
+
+-- jobs (accepted_by_contractorID)
+ALTER TABLE jobs
+ADD CONSTRAINT jobs_fk_contractors
+FOREIGN KEY (accepted_by_contractorID)
+REFERENCES contractors(contractorID);
+
+-- ratings (contractor)
+ALTER TABLE ratings
+ADD CONSTRAINT ratings_fk_contractors
+FOREIGN KEY (contractorID)
+REFERENCES contractors(contractorID);
+
+-- ratings (user)
+ALTER TABLE ratings
+ADD CONSTRAINT ratings_fk_users
+FOREIGN KEY (userID)
+REFERENCES app_users(userID);
+
+-- ratings (job)
+ALTER TABLE ratings
+ADD CONSTRAINT ratings_fk_jobs
+FOREIGN KEY (jobID)
+REFERENCES jobs(jobID);
+
+-- employees_proj (site)
+ALTER TABLE employees_proj
+ADD CONSTRAINT fk_site
+FOREIGN KEY (siteID)
+REFERENCES company_sites(siteID);
+
+-- employees_proj (department)
+ALTER TABLE employees_proj
+ADD CONSTRAINT fk_department
+FOREIGN KEY (departmentID)
+REFERENCES departments(departmentID);
+
+-- it_service_tickets (user)
+ALTER TABLE it_service_tickets
+ADD CONSTRAINT fk_ticket_user
+FOREIGN KEY (userID)
+REFERENCES app_users(userID);
+
+-- it_service_tickets (employee)
+ALTER TABLE it_service_tickets
+ADD CONSTRAINT fk_ticket_employee
+FOREIGN KEY (employeeID)
+REFERENCES employees_proj(employeeID);
+
+-- communication_log
+ALTER TABLE communication_log
+ADD CONSTRAINT fk_log_ticket
+FOREIGN KEY (ticketID)
+REFERENCES it_service_tickets(ticketID);
+
+-- consultants
+ALTER TABLE consultants
+ADD CONSTRAINT fk_consult_employee
+FOREIGN KEY (employeeID)
+REFERENCES employees_proj(employeeID);
+-------------------------------------------------------------------------
 
 --Insert statements
 INSERT INTO APP_USERS
@@ -244,6 +382,38 @@ INSERT INTO communication_log (logID, messageHistory, ticketID)
 
 INSERT INTO communication_log (logID, messageHistory, ticketID, employeeID, userID)
     VALUES (102, 'Password was reset.', 2, 1, 2);
+
+
+INSERT INTO company_sites
+    (siteID, siteName, street, city, state, country, siteType, sitePhoneNumber, employeesCount, consultantsCount)
+    VALUES
+    (1, 'Gotham HQ', '100 Wayne St', 'Gotham', 'NJ', 'USA', 'Headquarters', '215-111-1111', 50, 5);
+
+INSERT INTO company_sites
+    (siteID, siteName, street, city, state, country, siteType, sitePhoneNumber, employeesCount, consultantsCount)
+    VALUES
+    (2, 'Metropolis Branch', '200 Daily Planet Ave', 'Metropolis', 'NY', 'USA', 'Branch', '212-222-2222', 40, 3);
+
+INSERT INTO departments
+    (departmentID, departmentName, managedByEmployeeID, siteID)
+    VALUES
+    (10, 'IT Support', 1, 1);
+
+INSERT INTO departments
+    (departmentID, departmentName, managedByEmployeeID, siteID)
+    VALUES
+    (20, 'Engineering', 2, 2);
+
+INSERT INTO consultants
+    (consultantID, firstName, lastName, startDate, emailAddress, workNumber, senority, departmentID, siteID, employeeID)
+    VALUES
+    (1, 'Tony', 'Stark', TO_DATE('2023-01-10','YYYY-MM-DD'), 'tony.stark@avengers.com', 1111111, 10, 10, 1, 1);
+
+INSERT INTO consultants
+    (consultantID, firstName, lastName, startDate, emailAddress, workNumber, senority, departmentID, siteID, employeeID)
+    VALUES
+    (2, 'Diana', 'Prince', TO_DATE('2022-06-15','YYYY-MM-DD'), 'diana.prince@justiceleague.com', 2222222, 8, 20, 2, 2);
+
     
 --Drop table statements for testing
 
