@@ -154,7 +154,6 @@ CREATE TABLE consultants
     senority INT NOT NULL,
     departmentID NUMBER NOT NULL UNIQUE,
     siteID NUMBER UNIQUE,
-    employeeID NUMBER UNIQUE,
     CONSTRAINT consultants_pk
         PRIMARY KEY (consultantID)
 );
@@ -284,11 +283,23 @@ ADD CONSTRAINT fk_log_ticket
 FOREIGN KEY (ticketID)
 REFERENCES it_service_tickets(ticketID);
 
--- consultants
-ALTER TABLE consultants
-ADD CONSTRAINT fk_consult_employee
+CREATE TABLE consultants_consults_employees
+(   consultantID NUMBER NOT NULL,
+employeeID NUMBER NOT NULL,
+CONSTRAINT cce_pk
+    PRIMARY KEY (consultantID,employeeID)
+);
+
+ALTER TABLE consultants_consults_employees
+ADD CONSTRAINT fk_cce_consultants
+FOREIGN KEY (consultantID)
+REFERENCES consultants(consultantID);
+
+ALTER TABLE consultants_consults_employees
+ADD CONSTRAINT fk_cce_employee
 FOREIGN KEY (employeeID)
 REFERENCES employees_proj(employeeID);
+
 -------------------------------------------------------------------------
 
 --Insert statements
@@ -402,14 +413,14 @@ VALUES (
 
 
 INSERT INTO consultants
-    (consultantID, firstName, lastName, startDate, emailAddress, workNumber, senority, departmentID, siteID, employeeID)
+    (consultantID, firstName, lastName, startDate, emailAddress, workNumber, senority, departmentID, siteID)
     VALUES
-    (1, 'Tony', 'Stark', TO_DATE('2023-01-10','YYYY-MM-DD'), 'tony.stark@avengers.com', 1111111, 10, 10, 1, 1);
+    (1, 'Tony', 'Stark', TO_DATE('2023-01-10','YYYY-MM-DD'), 'tony.stark@avengers.com', 1111111, 10, 10, 1);
 
 INSERT INTO consultants
-    (consultantID, firstName, lastName, startDate, emailAddress, workNumber, senority, departmentID, siteID, employeeID)
+    (consultantID, firstName, lastName, startDate, emailAddress, workNumber, senority, departmentID, siteID)
     VALUES
-    (2, 'Diana', 'Prince', TO_DATE('2022-06-15','YYYY-MM-DD'), 'diana.prince@justiceleague.com', 2222222, 8, 20, 2, 2);
+    (2, 'Diana', 'Prince', TO_DATE('2022-06-15','YYYY-MM-DD'), 'diana.prince@justiceleague.com', 2222222, 8, 20, 2);
 
 INSERT INTO it_service_tickets 
     (ticketID, serviceIssues, status, userID, employeeID)
@@ -427,7 +438,13 @@ INSERT INTO communication_log (logID, messageHistory, ticketID)
     VALUES ( 101, 'User cannot login.', 1);
 
 INSERT INTO communication_log (logID, messageHistory, ticketID)
-    VALUES (102, 'Password was reset.', 2);   
+    VALUES (102, 'Password was reset.', 2);
+    
+INSERT INTO consultants_consults_employees (consultantID, employeeID)
+    VALUES (1, 1);
+
+INSERT INTO consultants_consults_employees (consultantID, employeeID)
+    VALUES (1, 2);
 --Drop table statements for testing
 
 --DROP TABLE app_users CASCADE CONSTRAINTS;
