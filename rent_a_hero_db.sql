@@ -10,7 +10,7 @@ CREATE TABLE app_users
 firstname CHAR(20) NOT NULL,
 lastname CHAR(20) NOT NULL,
 userpassword VARCHAR2(50) NOT NULL,
-emailaddress VARCHAR2(50) NOT NULL UNIQUE,
+emailaddress VARCHAR2(50) NOT NULL,
 phonenumber VARCHAR2(15) NOT NULL,
 dateofbirth DATE NOT NULL,
 paymentinformation VARCHAR(50) NOT NULL,
@@ -28,21 +28,22 @@ CREATE TABLE contractors
 servicelocation VARCHAR2(50) NOT NULL,
 accountbio VARCHAR2(200) NOT NULL,
 rate NUMBER NOT NULL,
-userID NUMBER NOT NULL UNIQUE,
+userID NUMBER UNIQUE,
 CONSTRAINT contractors_pk
     PRIMARY KEY (contractorID)
-CONSTRAINT contractors_userid_uq
-    UNIQUE(userID)
 );
+
+--DROP TABLE CONTRACTORS;
 
 --CONTRACTORS_SKILLS
 CREATE TABLE contractors_skills
-(   contractorID NUMBER NOT NULL,
+( contractorID NUMBER UNIQUE,  
 skill VARCHAR2(50) NOT NULL,
 CONSTRAINT contractors_skills_pk
-    PRIMARY KEY (contractorID, skill)
+    PRIMARY KEY(contractorID, skill)
 );
-    
+
+--DROP TABLE CONTRACTORS_skills;   
 
 --JOBS TABLE
 CREATE TABLE jobs
@@ -58,7 +59,7 @@ CREATE TABLE jobs
 --RATINGS TABLE
 CREATE TABLE ratings
 (
-  ratingID NUMBER UNIQUE PRIMARY KEY,
+  ratingID NUMBER PRIMARY KEY,
   rating_score NUMBER NOT NULL,
   date_written DATE NOT NULL,
   comments VARCHAR2(255),
@@ -134,18 +135,17 @@ CREATE TABLE communication_log (
 --Indexing for users and contractors
 CREATE INDEX userlastname_index ON app_users(lastname);
 CREATE INDEX contractorlocation_index ON contractors(servicelocation);
-CREATE INDEX useremail_index ON app_users(emailaddress);
-CREATE INDEX contractoruseris_index ON contractors(userID);
+
 
 --Sequences for tables
-CREATE SEQUENCE USERS_ID_SEQ
-    START WITH 70001234;
+CREATE SEQUENCE APP_USERS_ID_SEQ
+    START WITH 1;
 CREATE SEQUENCE CONTRACTORS_ID_SEQ
-    START WITH 1001;
+    START WITH 1;
 
 --CONSULTANTS Table
 CREATE TABLE consultants
-(   consultantID NUMBER NOT NULL UNIQUE,
+(   consultantID NUMBER NOT NULL,
     firstName CHAR(20) NOT NULL,
     lastName CHAR(20) NOT NULL,
     startDate DATE NOT NULL,
@@ -156,12 +156,12 @@ CREATE TABLE consultants
     siteID NUMBER UNIQUE,
     employeeID NUMBER UNIQUE,
     CONSTRAINT consultants_pk
-        PRIMARY KEY (consultantID),
+        PRIMARY KEY (consultantID)
 );
 
 --COMPANY_SITES Table
 CREATE TABLE company_sites
-(   siteID NUMBER NOT NULL UNIQUE,
+(   siteID NUMBER NOT NULL,
     siteName VARCHAR2(100) NOT NULL,
     street VARCHAR2(50) NOT NULL,
     city VARCHAR2(100) NOT NULL,
@@ -177,12 +177,12 @@ CREATE TABLE company_sites
 
 --DEPARTMENTS Table
 CREATE TABLE departments
-(   departmentID NUMBER NOT NULL UNIQUE,
+(   departmentID NUMBER NOT NULL ,
     departmentName VARCHAR2(100) NOT NULL,
     managedByEmployeeID NUMBER NOT NULL UNIQUE,
     siteID NUMBER UNIQUE,
     CONSTRAINT departments_pk
-        PRIMARY KEY (departmentID),
+        PRIMARY KEY (departmentID)
 );
 
 --Indexing for consultants
@@ -191,17 +191,17 @@ CREATE INDEX consultantemail_index ON consultants(emailAddress);
 
 -- COMPANY_SITES sequence
 CREATE SEQUENCE company_sites_id_seq
-    START WITH 0
+    START WITH 1
     INCREMENT BY 1;
 
 -- DEPARTMENTS sequence
 CREATE SEQUENCE departments_id_seq
-    START WITH 0
+    START WITH 1
     INCREMENT BY 1;
 
 -- CONSULTANTS sequence
 CREATE SEQUENCE consultants_id_seq
-    START WITH 0
+    START WITH 1
     INCREMENT BY 1;
 
 
@@ -296,22 +296,22 @@ INSERT INTO APP_USERS
     (userID, firstname, lastname, userpassword, 
     emailaddress, phonenumber, dateofbirth, paymentinformation,
     middlename, refferedbyemployeeID) 
-VALUES(USER_ID_SEQ.NEXTVAL, 'Bruce', 'Wayne', 'L0v3Alffy', 
-    'thedarkknight@hotmail.com', '215-440-1605', '02/19/1990', 'Wayne Enterprises', 'Thomas', 3);
+VALUES(APP_USERS_ID_SEQ.NEXTVAL, 'Bruce', 'Wayne', 'L0v3Alffy', 
+    'thedarkknight@hotmail.com', '215-440-1605', '19-FEB-90', 'Wayne Enterprises', 'Thomas', null);
     
 INSERT INTO APP_USERS
     (userID, firstname, lastname, userpassword, 
     emailaddress, phonenumber, dateofbirth, paymentinformation,
     middlename, refferedbyemployeeID) 
-VALUES(USER_ID_SEQ.NEXTVAL, 'Geoke', 'Ur', 'G0th@mi$min3!', 
-    'bAtMaNsAvEuS@aol.com', '333-222-1111', '07/11/1991', 'Gotham Bank', null, null);
+VALUES(APP_USERS_ID_SEQ.NEXTVAL, 'Geoke', 'Ur', 'G0th@mi$min3!', 
+    'bAtMaNsAvEuS@aol.com', '333-222-1111', '11-JUL-91', 'Gotham Bank', null, null);
 
 INSERT INTO APP_USERS
     (userID, firstname, lastname, userpassword, 
     emailaddress, phonenumber, dateofbirth, paymentinformation,
     middlename, refferedbyemployeeID) 
-VALUES(USER_ID_SEQ.NEXTVAL, 'Clark', 'Kent', 'Lois0817<3', 
-    'manofsteel@yahoo.com', '531-235-6795', '02/29/1985', 'Wayne Enterprises', 'Thomas', 3);
+VALUES(APP_USERS_ID_SEQ.NEXTVAL, 'Clark', 'Kent', 'Lois0817<3', 
+    'manofsteel@yahoo.com', '531-235-6795', '28-FEB-85', 'Wayne Enterprises', 'Thomas', null);
 
 INSERT INTO CONTRACTORS 
     (contractorID, servicelocation, accountbio, rate, userID)
@@ -320,7 +320,12 @@ VALUES(CONTRACTORS_ID_SEQ.NEXTVAL, 'Gotham City',
     20, (SELECT USERID
     FROM APP_USERS
     WHERE EMAILADDRESS = 'thedarkknight@hotmail.com'));
-
+    
+--SELECT *
+--FROM CONTRACTORS;
+--
+--SELECT *
+--FROM APP_USERS;
 INSERT INTO CONTRACTORS
     (contractorID, servicelocation, accountbio, rate, userID)
 VALUES(CONTRACTORS_ID_SEQ.NEXTVAL, 'Earth', 
@@ -331,58 +336,38 @@ VALUES(CONTRACTORS_ID_SEQ.NEXTVAL, 'Earth',
     
 INSERT INTO CONTRACTORS_SKILLS 
     (contractorID, skill)
-VALUES(1001, 'Martial Arts');
+VALUES((SELECT CONTRACTORID
+    FROM CONTRACTORS C JOIN
+    APP_USERS U ON 
+    (U.USERID = C.USERID)
+    WHERE EMAILADDRESS = 'thedarkknight@hotmail.com'), 
+    'Martial Arts');
 
 INSERT INTO CONTRACTORS_SKILLS
     (contractorID, skill)
-VALUES(1002, 'Ability to fly');
+VALUES((SELECT CONTRACTORID
+    FROM CONTRACTORS C JOIN
+    APP_USERS U ON 
+    (U.USERID = C.USERID)
+    WHERE EMAILADDRESS = 'manofsteel@yahoo.com'), 'Ability to fly');
 
 INSERT INTO jobs
 (jobID, status, description, timestamp, created_by_userID, accepted_by_contractorID)
-VALUES(1, 'OPEN', 'Defeat Villian 1', CURRENT_TIMESTAMP, 70001234, 1001);
+VALUES(1, 'OPEN', 'Defeat Villian 1', CURRENT_TIMESTAMP, 2, 1);
 
 INSERT INTO jobs
 (jobID, status, description, timestamp, created_by_userID, accepted_by_contractorID)
-VALUES(2, 'ASSIGNED', 'Defeat Villian 2', CURRENT_TIMESTAMP, 70001235, 1002);
+VALUES(2, 'ASSIGNED', 'Defeat Villian 2', CURRENT_TIMESTAMP, 2, 2);
 
 INSERT INTO ratings
 (ratingID, rating_score, date_written, comments, contractorID, userID, jobID)
-VALUES(1, 5, SYSDATE, 'Excellent work', 1001, 70001234, 1);
+VALUES(1, 5, SYSDATE, 'Excellent work', 1, 2, 1);
 
 INSERT INTO ratings
 (ratingID, rating_score, date_written, comments, contractorID, userID, jobID)
-VALUES(1, 4, SYSDATE, 'Good work', 1002, 70001235, 2);
+VALUES(2, 4, SYSDATE, 'Good work', 2, 2, 2);
 
 --Insert Statements for Employees, IT Service Ticekts and Communication Log
-INSERT INTO employees_proj 
-    (employeeID, firstName, middleName, lastName, hireDate, emailAddress, phoneNumber, jobTitle, salary, bonus, siteID, departmentID)
-VALUES (
-    1, 'Chris', 'A', 'Pine', TO_DATE('2022-05-10','YYYY-MM-DD'), 'chris.pine@email.com', '123-456-7890', 'IT Support', 60000, 5000, 1, 10);
-
-INSERT INTO employees_proj (
-    employeeID, firstName, middleName, lastName, hireDate, emailAddress, phoneNumber, jobTitle, salary, bonus, siteID, departmentID)
-VALUES ( 
-    2, 'Julia', NULL, 'Smith', TO_DATE('2021-03-15','YYYY-MM-DD'), 'julia.smith@email.com', '987-654-3210','Engineer', 80000, 7000, 2, 20
-);
-
-INSERT INTO it_service_tickets 
-    (ticketID, serviceIssues, status, userID, employeeID)
-VALUES (
-    1, 'Can''t login into my account.', 'In Progress', 3, 2
-);
-
-INSERT INTO it_service_tickets 
-    (ticketID, serviceIssues, status, userID, employeeID)
-VALUES (
-    2, 'My password is incorrect.', 'Resolved', 2, 1
-);
-
-INSERT INTO communication_log (logID, messageHistory, ticketID)
-    VALUES ( 101, 'User cannot login.', 1);
-
-INSERT INTO communication_log (logID, messageHistory, ticketID, employeeID, userID)
-    VALUES (102, 'Password was reset.', 2, 1, 2);
-
 
 INSERT INTO company_sites
     (siteID, siteName, street, city, state, country, siteType, sitePhoneNumber, employeesCount, consultantsCount)
@@ -403,6 +388,18 @@ INSERT INTO departments
     (departmentID, departmentName, managedByEmployeeID, siteID)
     VALUES
     (20, 'Engineering', 2, 2);
+    
+INSERT INTO employees_proj 
+    (employeeID, firstName, middleName, lastName, hireDate, emailAddress, phoneNumber, jobTitle, salary, bonus, siteID, departmentID)
+VALUES (
+    1, 'Chris', 'A', 'Pine', TO_DATE('2022-05-10','YYYY-MM-DD'), 'chris.pine@email.com', '123-456-7890', 'IT Support', 60000, 5000, 1, 10);
+
+INSERT INTO employees_proj (
+    employeeID, firstName, middleName, lastName, hireDate, emailAddress, phoneNumber, jobTitle, salary, bonus, siteID, departmentID)
+VALUES ( 
+    2, 'Julia', NULL, 'Smith', TO_DATE('2021-03-15','YYYY-MM-DD'), 'julia.smith@email.com', '987-654-3210','Engineer', 80000, 7000, 2, 20
+);
+
 
 INSERT INTO consultants
     (consultantID, firstName, lastName, startDate, emailAddress, workNumber, senority, departmentID, siteID, employeeID)
@@ -414,15 +411,36 @@ INSERT INTO consultants
     VALUES
     (2, 'Diana', 'Prince', TO_DATE('2022-06-15','YYYY-MM-DD'), 'diana.prince@justiceleague.com', 2222222, 8, 20, 2, 2);
 
-    
+INSERT INTO it_service_tickets 
+    (ticketID, serviceIssues, status, userID, employeeID)
+VALUES (
+    1, 'Can''t login into my account.', 'In Progress', 1, 2
+);
+
+INSERT INTO it_service_tickets 
+    (ticketID, serviceIssues, status, userID, employeeID)
+VALUES (
+    2, 'My password is incorrect.', 'Resolved', 3, 1
+);
+
+INSERT INTO communication_log (logID, messageHistory, ticketID)
+    VALUES ( 101, 'User cannot login.', 1);
+
+INSERT INTO communication_log (logID, messageHistory, ticketID)
+    VALUES (102, 'Password was reset.', 2);   
 --Drop table statements for testing
 
---DROP TABLE app_users;
---DROP TABLE contractors;
---DROP TABLE contractors_skills;
---DROP TABLE jobs;
---DROP TABLE ratings;
-
+--DROP TABLE app_users CASCADE CONSTRAINTS;
+--DROP TABLE contractors CASCADE CONSTRAINTS;
+--DROP TABLE contractors_skills CASCADE CONSTRAINTS;
+--DROP TABLE jobs CASCADE CONSTRAINTS;
+--DROP TABLE ratings CASCADE CONSTRAINTS;
+--DROP TABLE communication_log CASCADE CONSTRAINTS;
+--DROP TABLE it_service_tickets CASCADE CONSTRAINTS;
+--DROP TABLE consultants CASCADE CONSTRAINTS;
+--DROP TABLE employees_proj CASCADE CONSTRAINTS;
+--DROP TABLE departments CASCADE CONSTRAINTS;
+--DROP TABLE company_sites CASCADE CONSTRAINTS;
 
 --Drop index statements for testing
 
@@ -433,8 +451,11 @@ INSERT INTO consultants
 
 --Drop sequence statements for testing
 
---DROP SEQUENCE IF EXISTS USERS_ID_SEQ;
+--DROP SEQUENCE IF EXISTS APP_USERS_ID_SEQ;
 --DROP SEQUENCE IF EXISTS CONTRACTORS_ID_SEQ;
+--DROP SEQUENCE IF EXISTS company_sites_id_seq;
+--DROP SEQUENCE IF EXISTS departments_id_seq;
+--DROP SEQUENCE IF EXISTS consultants_id_seq;
 
 -- Summary queries
 SELECT 
@@ -449,7 +470,7 @@ SELECT
   u.userID,
   COUNT(j.jobID) AS total_jobs_posted,
   AVG(r.rating_score) AS avg_job_rating
-FROM users u
+FROM APP_users u
 JOIN jobs j ON u.userID = j.created_by_userID
 LEFT JOIN ratings r ON j.jobID = r.jobID
 GROUP BY u.userID;
